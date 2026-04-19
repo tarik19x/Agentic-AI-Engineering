@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 
 load_dotenv()
 
 
 def main(): 
     print("RUNNING NEW CODE")
+
     information ="""
     Steven Paul Jobs (February 24, 1955 – October 5, 2011) was an American businessman, inventor,[2] and investor. A pioneer of the personal computer revolution of the 1970s and 1980s, Jobs co-founded Apple Inc. with his early business partner Steve Wozniak as Apple Computer Company in 1976. After the company's board of directors fired him in 1985, he founded NeXT the same year and purchased Pixar in 1986, becoming its chairman and majority shareholder until 2007. Jobs returned to Apple in 1997 as CEO, where he was closely involved with the creation and promotion of many of the company's most influential products until his resignation in 2011.
 
@@ -26,9 +28,12 @@ def main():
 
     summary_prompt_tempalte = PromptTemplate(input_variables = ["information"], template = summary_template)
     llm = ChatOpenAI(temperature= 0, model ="gpt-5")
+    # print("USING OLLAMA")
+    # llm = chatOllama = ChatOllama(temperature=0, model="gemma3:270m")
     
     chain  = summary_prompt_tempalte | llm
-    response = chain.invoke(information = information)
+    response = chain.invoke(input = {"information": information})
+    print(response.content)
 
 if __name__ == "__main__":
     main()
