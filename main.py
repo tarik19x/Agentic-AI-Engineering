@@ -1,29 +1,68 @@
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_tavily import TavilySearch
-from langchain_classic import hub
-from langchain_classic.agents import AgentExecutor, create_react_agent
+from typing import Any, Dict, List
 
-load_dotenv()
+import streamlit as st
 
-tools = [TavilySearch()]
-llm = ChatOpenAI(model="gpt-4")
+from backed.core import run_llm
 
-# Pull the prompt from the classic hub
-react_prompt = hub.pull("hwchase17/react")
 
-agent = create_react_agent(llm=llm, tools=tools, prompt=react_prompt) # it creates the chain
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True) # it runs the tools and decide what to do with the output of the tools, it also prints the intermediate steps because verbose is set to True
+def _format_sources(context_docs: List[Any]) -> List[str]:
+    return [
+        str((meta.get("source") or "Unknown"))
+        for doc in (context_docs or [])
+        if (meta := (getattr(doc, "metadata", None) or {})) is not None
+    ]
 
-chain = agent_executor
 
-def main(): 
-    result = chain.invoke(
-        input = {
-            "input": "search for 3 job postings for an ML engineer in the Vancouver,BC area in Canada on linkedin and list their details"
+st.set_page_config(page_title="BD News Portal", layout="centered")
+st.title("Daily News Portal")
+
+with st.sidebar:
+    st.subheader("Session")
+    if st.button("Clear chat", use_container_width=True):
+        st.session_state.pop("messages", None)
+        st.rerun()
+
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {
+        "role": "assistant",
+        "content": "Ask me anything about Todays Bangladesh. I’ll retrieve relevant context and cite sources.",
+        "sources":[],
         }
-    )
-    print(result)
+        
+    ]
 
-if __name__ == "__main__":
-    main()
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+        if msg.get("sources"):
+            with st.expander("Sources"):
+                for s in msg["sources"]:
+                    st.markdown(f"- {s}")
+
+prompt = st.chat_input("Ask a question about Today's Bangladesh")
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt, "sources": []})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+       
+    with st.chat_message("assistant"):
+        try:
+            with st.spinner("Retrieving docs and generating answer…"):
+                result: Dict[str, Any] = run_llm(prompt)
+                answer = str(result.get("answer", "")).strip() or "(No answer returned.)"
+                sources = _format_sources(result.get("context", []))
+
+            st.markdown(answer)
+            if sources:
+                with st.expander("Sources"):
+                    for s in sources:
+                        st.markdown(f"- {s}")
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": answer, "sources": sources}
+            )
+        except Exception as e:
+            st.error("Failed to generate a response.")
+            st.exception(e)
+            

@@ -6,10 +6,20 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "black>=26.3.1",
+    "instructorembedding>=1.0.1",
     "isort>=8.0.1",
     "langchain>=1.2.15",
+    "langchain-community>=0.4.1",
     "langchain-ollama>=1.1.0",
     "langchain-openai>=1.1.14",
+    "langchain-pinecone>=0.2.13",
     "langchain-tavily>=0.2.18",
+    "langchain-text-splitters>=1.1.2",
     "python-dotenv>=1.2.2",
+    "scrapy>=2.15.2",
+    "sentence-transformers>=5.4.1",
+    "streamlit>=1.57.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "transformers>=5.7.0",
 ]
